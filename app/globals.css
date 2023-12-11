@@ -1,6 +1,6 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
 
 :root {
   --foreground-rgb: 0, 0, 0;
@@ -24,4 +24,26 @@ body {
       rgb(var(--background-end-rgb))
     )
     rgb(var(--background-start-rgb));
+}
+
+/* styles/global.css */
+.input-field {
+  padding: 8px 12px;
+  border-radius: 4px;
+  border: 1px solid #304D30;
+}
+
+.btn-submit {
+  padding: 8px 16px;
+  background-color: #163020;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.result-display {
+  background-color: #B6C4B6;
+  padding: 16px;
+  border-radius: 8px;
 }

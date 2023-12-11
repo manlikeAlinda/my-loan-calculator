@@ -1,113 +1,184 @@
-import Image from 'next/image'
+// First, make sure to install react-minimal-pie-chart using npm or yarn
+// npm install react-minimal-pie-chart
+
+"use client";
+import React, { useState } from 'react';
+import dynamic from 'next/dynamic';
+
+// Dynamically load PieChart component
+// Dynamically load the PieChart component
+const PieChart = dynamic(
+  () => import('react-minimal-pie-chart').then((mod) => mod.PieChart),
+  { ssr: false }
+);
+
 
 export default function Home() {
+  const [principal, setPrincipal] = useState(50000000); // default value
+  const [downPayment, setDownPayment] = useState(5000000); // default value
+  const [loanTerm, setLoanTerm] = useState(20); // default value, in years
+  const [interestRate, setInterestRate] = useState(8); // default value, percentage
+  const [monthlyPayment, setMonthlyPayment] = useState('');
+  const [totalInterest, setTotalInterest] = useState('');
+  const [totalPayment, setTotalPayment] = useState('');
+  const [error, setError] = useState('');
+
+  const isValidInput = () => {
+    const principalAmount = parseFloat(String(principal));
+    const interestRateAmount = parseFloat(String(interestRate));
+    const loanTermAmount = parseFloat(String(loanTerm));
+
+    if (principalAmount <= 0 || interestRateAmount <= 0 || loanTermAmount <= 0) {
+      setError('Please enter positive values for all fields.');
+      return false;
+    }
+    setError('');
+    return true;
+  };
+
+  const calculateLoan = () => {
+    if (!isValidInput()) return;
+
+    const principalAmount = parseFloat(String(principal));
+    const downPaymentAmount = parseFloat(String(downPayment));
+    const actualPrincipal = principalAmount - downPaymentAmount;
+    const monthlyInterestRate = parseFloat(String(interestRate)) / 100 / 12;
+    const totalPayments = parseFloat(String(loanTerm)) * 12;
+
+    const numerator = monthlyInterestRate * Math.pow(1 + monthlyInterestRate, totalPayments);
+    const denominator = Math.pow(1 + monthlyInterestRate, totalPayments) - 1;
+    const monthlyRepayment = actualPrincipal * numerator / denominator;
+
+    if (!isNaN(monthlyRepayment)) {
+      const totalRepayment = monthlyRepayment * totalPayments;
+      const totalInterestPaid = totalRepayment - actualPrincipal;
+
+      setMonthlyPayment(monthlyRepayment.toFixed(2));
+      setTotalInterest(totalInterestPaid.toFixed(2));
+      setTotalPayment(totalRepayment.toFixed(2));
+    } else {
+      setError('Invalid calculation. Please check your inputs.');
+    }
+  };
+
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    calculateLoan();
+  };
+
+  const formatCurrencyUGX = (value:number) => {
+    return value.toLocaleString('en-US', {
+      style: 'currency',
+      currency: 'UGX',
+      // Remove these options if you don't want the currency symbol and code
+      currencyDisplay: 'code', // 'code' will display the currency code 'UGX'
+      minimumFractionDigits: 0, // Ugandan Shilling typically doesn't use minor units
+      maximumFractionDigits: 0, // Adjust these as needed for your application
+    });
+  };
+  
+
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
-      <div className="z-10 max-w-5xl w-full items-center justify-between font-mono text-sm lg:flex">
-        <p className="fixed left-0 top-0 flex w-full justify-center border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto  lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30">
-          Get started by editing&nbsp;
-          <code className="font-mono font-bold">app/page.tsx</code>
-        </p>
-        <div className="fixed bottom-0 left-0 flex h-48 w-full items-end justify-center bg-gradient-to-t from-white via-white dark:from-black dark:via-black lg:static lg:h-auto lg:w-auto lg:bg-none">
-          <a
-            className="pointer-events-none flex place-items-center gap-2 p-8 lg:pointer-events-auto lg:p-0"
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{' '}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className="dark:invert"
-              width={100}
-              height={24}
-              priority
+    <div className="min-h-screen bg-[#163020] flex flex-col items-center justify-center p-10">
+      <div className="w-full max-w-4xl bg-[#B6C4B6] shadow-md rounded-lg p-10">
+        <h1 className="text-4xl font-bold text-[#163020] mb-6 text-center">Loan Calculator With NEXTJS!!</h1>
+        <form onSubmit={handleSubmit} className="grid md:grid-cols-2 gap-10">
+          <div>
+            <label htmlFor="loanAmount" className="block text-lg font-medium text-gray-700">Loan Amount</label>
+            <input
+              type="range"
+              id="loanAmount"
+              name="loanAmount"
+              min="1000000"
+              max="100000000"
+              value={principal}
+              onChange={(e) => setPrincipal(parseInt(e.target.value, 10) || 0)}
+
+              step="100000"
+              className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
             />
-          </a>
-        </div>
+            <p className="text-right">{formatCurrencyUGX(principal)}</p>
+
+            <div>
+              <label htmlFor="downPayment" className="block text-lg font-medium text-gray-700">Down Payment</label>
+              <input
+                type="range"
+                id="downPayment"
+                name="downPayment"
+                min="0"
+                max="100000000"
+                value={downPayment}
+                onChange={(e) => setDownPayment(parseInt(e.target.value, 10) || 0)}
+                step="100000"
+                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
+              />
+              <p className="text-right">{formatCurrencyUGX(downPayment)}</p>
+
+              <label htmlFor="loanTerm" className="block text-lg font-medium text-gray-700">Tenure (Years)</label>
+              <input
+                type="range"
+                id="loanTerm"
+                name="loanTerm"
+                min="1"
+                max="30"
+                value={loanTerm}
+                onChange={(e) => setLoanTerm(parseInt(e.target.value, 10) || 0)}
+                step="1"
+                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
+              />
+              <p className="text-right">{loanTerm} years</p>
+
+              <label htmlFor="interestRate" className="block text-lg font-medium text-gray-700">Interest Rate (%)</label>
+              <input
+                type="range"
+                id="interestRate"
+                name="interestRate"
+                min="1"
+                max="25"
+                value={interestRate}
+                onChange={(e) => setInterestRate(parseInt(e.target.value, 10) || 0)}
+                step="0.1"
+                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
+              />
+              <p className="text-right">{interestRate}%</p>
+            </div>
+
+            <div className="mt-4">
+              <button
+                type="submit"
+                className="w-full bg-[#163020] text-white px-4 py-2 rounded hover:bg-[#304D30] transition-colors"
+              >
+                Calculate Monthly Payment
+              </button>
+            </div>
+          </div>
+
+          <div className="flex flex-col items-center">
+            {monthlyPayment && (
+                <PieChart
+                  data={[
+                    { title: 'Principal', value: principal - downPayment, color: '#163020' },
+                    { title: 'Interest', value: Number(totalInterest), color: '#304D30' }
+                  ]}
+                  style={{ height: '200px' }}
+                  label={({ dataEntry }) => dataEntry.title}
+                  labelStyle={{
+                    fontSize: '5px',
+                    fontFamily: 'sans-serif',
+                  }}
+                  labelPosition={112}
+                />
+              )}
+              <div className="text-[#163020] mt-4">
+                {/* //if the values are not available, display nothing */}
+              <p className="text-lg">Monthly Payment: {monthlyPayment ? formatCurrencyUGX(Number(monthlyPayment)) : '-'}</p>
+              <p className="text-lg">Total Amount Payable: {totalPayment ? formatCurrencyUGX(Number(totalPayment)) : '-'}</p>
+              <p className="text-lg">Total Interest: {totalInterest ? formatCurrencyUGX(Number(totalInterest)) : '-'}</p>
+            </div>
+          </div>
+        </form>
+        {error && <p className="text-red-500 mt-4">{error}</p>}
       </div>
-
-      <div className="relative flex place-items-center before:absolute before:h-[300px] before:w-[480px] before:-translate-x-1/2 before:rounded-full before:bg-gradient-radial before:from-white before:to-transparent before:blur-2xl before:content-[''] after:absolute after:-z-20 after:h-[180px] after:w-[240px] after:translate-x-1/3 after:bg-gradient-conic after:from-sky-200 after:via-blue-200 after:blur-2xl after:content-[''] before:dark:bg-gradient-to-br before:dark:from-transparent before:dark:to-blue-700 before:dark:opacity-10 after:dark:from-sky-900 after:dark:via-[#0141ff] after:dark:opacity-40 before:lg:h-[360px] z-[-1]">
-        <Image
-          className="relative dark:drop-shadow-[0_0_0.3rem_#ffffff70] dark:invert"
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
-
-      <div className="mb-32 grid text-center lg:max-w-5xl lg:w-full lg:mb-0 lg:grid-cols-4 lg:text-left">
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Docs{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Find in-depth information about Next.js features and API.
-          </p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Learn{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Learn about Next.js in an interactive course with&nbsp;quizzes!
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Templates{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Explore starter templates for Next.js.
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Deploy{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
-    </main>
-  )
+    </div>
+  );
 }
