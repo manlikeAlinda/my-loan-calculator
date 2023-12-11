@@ -66,7 +66,18 @@ export default function Home() {
     calculateLoan();
   };
 
-  const formatCurrencyUGX = (value:number) => {
+  const resetValues = () => {
+    setPrincipal(0);
+    setDownPayment(0);
+    setLoanTerm(0);
+    setInterestRate(0);
+    setMonthlyPayment('');
+    setTotalInterest('');
+    setTotalPayment('');
+    setError('');
+  };
+
+  const formatCurrencyUGX = (value: number) => {
     return value.toLocaleString('en-US', {
       style: 'currency',
       currency: 'UGX',
@@ -76,7 +87,7 @@ export default function Home() {
       maximumFractionDigits: 0, // Adjust these as needed for your application
     });
   };
-  
+
 
   return (
     <div className="min-h-screen bg-[#163020] flex flex-col items-center justify-center p-10">
@@ -151,26 +162,35 @@ export default function Home() {
                 Calculate Monthly Payment
               </button>
             </div>
+            <div className="mt-4">
+              <button
+                type="button" // This should be 'button', not 'submit'
+                onClick={resetValues}
+                className="w-full bg-[#163020] text-[#EEF0E5] px-4 py-2 rounded hover:bg-[#304D30] transition-colors"
+              >
+                Reset
+              </button>
+            </div>
           </div>
 
           <div className="flex flex-col items-center">
             {monthlyPayment && (
-                <PieChart
-                  data={[
-                    { title: 'Principal', value: principal - downPayment, color: '#163020' },
-                    { title: 'Interest', value: Number(totalInterest), color: '#304D30' }
-                  ]}
-                  style={{ height: '200px' }}
-                  label={({ dataEntry }) => dataEntry.title}
-                  labelStyle={{
-                    fontSize: '5px',
-                    fontFamily: 'sans-serif',
-                  }}
-                  labelPosition={112}
-                />
-              )}
-              <div className="text-[#163020] mt-4">
-                {/* //if the values are not available, display nothing */}
+              <PieChart
+                data={[
+                  { title: 'Principal', value: principal - downPayment, color: '#163020' },
+                  { title: 'Interest', value: Number(totalInterest), color: '#304D30' }
+                ]}
+                style={{ height: '200px' }}
+                label={({ dataEntry }) => dataEntry.title}
+                labelStyle={{
+                  fontSize: '5px',
+                  fontFamily: 'sans-serif',
+                }}
+                labelPosition={112}
+              />
+            )}
+            <div className="text-[#163020] mt-4">
+              {/* //if the values are not available, display nothing */}
               <p className="text-lg">Monthly Payment: {monthlyPayment ? formatCurrencyUGX(Number(monthlyPayment)) : '-'}</p>
               <p className="text-lg">Total Amount Payable: {totalPayment ? formatCurrencyUGX(Number(totalPayment)) : '-'}</p>
               <p className="text-lg">Total Interest: {totalInterest ? formatCurrencyUGX(Number(totalInterest)) : '-'}</p>
